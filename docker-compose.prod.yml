@@ -1,0 +1,57 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: research
+      POSTGRES_USER: research
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U research"]
+      interval: 3s
+      retries: 20
+  redis:
+    image: redis:7
+    restart: unless-stopped
+  web:
+    build: .
+    restart: unless-stopped
+    command: sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+  worker:
+    build: .
+    restart: unless-stopped
+    command: celery -A config worker -l info --concurrency=2
+    env_file: .env
+    volumes:
+      - models:/app/.fastembed
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+  caddy:
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+    depends_on:
+      - web
+volumes:
+  pgdata:
+  models:
+  caddy_data:
