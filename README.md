@@ -66,8 +66,8 @@ You need Docker Desktop and two free API keys:
 - Tavily: https://app.tavily.com
 
 
-git clone https://github.com/tarinam2789/research-assistant.git
-cd research-assistant
+git clone https://github.com/tarinam2789/AI-research-assistant.git
+cd AI-research-assistant
 cp .env.example .env
 # add your GEMINI_API_KEY and TAVILY_API_KEY to .env
 docker compose up --build
