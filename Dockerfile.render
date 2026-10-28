@@ -1,0 +1,16 @@
+FROM node:20 AS frontend
+WORKDIR /frontend
+COPY frontend/package.json ./
+RUN npm install
+COPY frontend/ ./
+RUN npm run build
+
+FROM python:3.12-slim
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+WORKDIR /app
+COPY requirements.txt .
+RUN grep -v fastembed requirements.txt > requirements-render.txt \
+    && pip install --no-cache-dir -r requirements-render.txt
+COPY . .
+COPY --from=frontend /frontend/dist /app/frontend_dist
+CMD ["sh", "-c", "python manage.py migrate && daphne -b 0.0.0.0 -p ${PORT:-10000} config.asgi:application"]

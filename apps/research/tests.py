@@ -30,9 +30,9 @@ def test_build_context_numbers_sources():
 
 @pytest.mark.django_db
 def test_create_question(client):
-    with patch("apps.research.views.run_research") as task:
+    with patch("apps.research.views.start_research") as start:
         resp = client.post(
             "/api/questions/", {"text": "What is pgvector?"}, content_type="application/json"
         )
     assert resp.status_code == 201
-    task.delay.assert_called_once()
+    start.assert_called_once()

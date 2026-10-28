@@ -27,6 +27,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -77,3 +78,13 @@ EMBEDDING_MODEL = env("EMBEDDING_MODEL", default="BAAI/bge-small-en-v1.5")
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 USE_TZ = True
+
+USE_CELERY = env.bool("USE_CELERY", default=True)
+EMBEDDING_BACKEND = env("EMBEDDING_BACKEND", default="local")
+GEMINI_EMBEDDING_MODEL = env("GEMINI_EMBEDDING_MODEL", default="gemini-embedding-001")
+MAX_CHUNKS_PER_SOURCE = env.int("MAX_CHUNKS_PER_SOURCE", default=40)
+
+_frontend_dist = BASE_DIR / "frontend_dist"
+if _frontend_dist.exists():
+    WHITENOISE_ROOT = _frontend_dist
+    WHITENOISE_INDEX_FILE = True

@@ -1,0 +1,42 @@
+databases:
+  - name: research-db
+    plan: free
+    databaseName: research
+    user: research
+
+services:
+  - type: keyvalue
+    name: research-redis
+    plan: free
+    ipAllowList: []
+
+  - type: web
+    name: ai-research-assistant
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.render
+    healthCheckPath: /api/questions/
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: research-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: research-redis
+          property: connectionString
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "0"
+      - key: USE_CELERY
+        value: "false"
+      - key: EMBEDDING_BACKEND
+        value: gemini
+      - key: MAX_CHUNKS_PER_SOURCE
+        value: "12"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
