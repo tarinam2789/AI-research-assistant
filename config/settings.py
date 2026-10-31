@@ -88,3 +88,5 @@ _frontend_dist = BASE_DIR / "frontend_dist"
 if _frontend_dist.exists():
     WHITENOISE_ROOT = _frontend_dist
     WHITENOISE_INDEX_FILE = True
+
+GEMINI_FALLBACK_MODEL = env("GEMINI_FALLBACK_MODEL", default="gemini-flash-lite-latest")

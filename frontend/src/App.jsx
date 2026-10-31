@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import Markdown from "./Markdown.jsx";
+import Logo from "./Logo.jsx";
 
 const STAGES = [
   { label: "SEARCH", hint: "querying the web" },
@@ -300,7 +301,7 @@ export default function App() {
     <div className="app">
       <aside className={`side ${menu ? "open" : ""}`}>
         <div className="brand">
-          <span className="glyph">∇</span>
+          <Logo size={40} />
           <div>
             <b>RESEARCH//LAB</b>
             <small>cited answers from the open web</small>
@@ -391,14 +392,7 @@ export default function App() {
           {run.status === "idle" && (
             <section className="welcome">
               <div className="hero">
-                <svg className="atom" viewBox="-50 -50 100 100" aria-hidden="true">
-                  <g className="orbits">
-                    <ellipse rx="40" ry="14" />
-                    <ellipse rx="40" ry="14" transform="rotate(60)" />
-                    <ellipse rx="40" ry="14" transform="rotate(120)" />
-                  </g>
-                  <circle className="nucleus" r="5" />
-                </svg>
+                <Logo size={116} ring />
                 <div>
                   <h1>
                     What do you want to <em>investigate</em>?

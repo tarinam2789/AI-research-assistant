@@ -5,16 +5,29 @@ import httpx
 import trafilatura
 from django.conf import settings
 
+RETRY_STATUSES = {429, 500, 502, 503, 504}
+
 
 def search_web(query, max_results=5):
-    resp = httpx.post(
-        "https://api.tavily.com/search",
-        headers={"Authorization": f"Bearer {settings.TAVILY_API_KEY}"},
-        json={"query": query, "max_results": max_results},
-        timeout=30,
-    )
-    resp.raise_for_status()
-    return resp.json().get("results", [])
+    error = "Web search failed"
+    for wait in (0, 2, 5):
+        time.sleep(wait)
+        try:
+            resp = httpx.post(
+                "https://api.tavily.com/search",
+                headers={"Authorization": f"Bearer {settings.TAVILY_API_KEY}"},
+                json={"query": query, "max_results": max_results},
+                timeout=httpx.Timeout(45, connect=10),
+            )
+        except httpx.TransportError:
+            error = "Web search timed out (Tavily did not respond)"
+            continue
+        if resp.status_code == 200:
+            return resp.json().get("results", [])
+        error = f"Web search error {resp.status_code}: {resp.text[:200]}"
+        if resp.status_code not in RETRY_STATUSES:
+            break
+    raise RuntimeError(error)
 
 
 def fetch_text(url):
@@ -71,16 +84,23 @@ def _embed_gemini(texts, input_type):
                 for t in batch
             ]
         }
+        resp = None
         for wait in (0, 5, 15, 30):
             time.sleep(wait)
-            resp = httpx.post(
-                url,
-                headers={"x-goog-api-key": settings.GEMINI_API_KEY},
-                json=body,
-                timeout=60,
-            )
-            if resp.status_code != 429:
+            try:
+                resp = httpx.post(
+                    url,
+                    headers={"x-goog-api-key": settings.GEMINI_API_KEY},
+                    json=body,
+                    timeout=httpx.Timeout(60, connect=10),
+                )
+            except httpx.TransportError:
+                resp = None
+                continue
+            if resp.status_code not in RETRY_STATUSES:
                 break
+        if resp is None:
+            raise RuntimeError("Embedding request timed out (Gemini did not respond)")
         resp.raise_for_status()
         vectors.extend(item["values"] for item in resp.json()["embeddings"])
     return vectors
